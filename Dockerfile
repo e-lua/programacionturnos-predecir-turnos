@@ -1,4 +1,8 @@
-FROM python:3.11.4
+FROM python:3.12.10-alpine3.21
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Set working directory
 WORKDIR /app
