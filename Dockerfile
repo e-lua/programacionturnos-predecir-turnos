@@ -1,4 +1,4 @@
-FROM python:3.12.10-alpine3.21
+FROM python:3.11.12-bullseye
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
