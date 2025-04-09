@@ -12,7 +12,8 @@ datos = [
     "TipoTurno":"",
     "SemanaAnteriorOriginal": "A (4 turnos),A (4 turnos),A (4 turnos - Sabado),A (4 turnos),A (4 turnos),A (4 turnos),ADM",
     "SemanaAnterior": "",
-    "SemanaSiguiente": ""
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": ""
   },
   {
     "Cedula": "1235044947",
@@ -20,7 +21,8 @@ datos = [
     "TipoTurno":"",
     "SemanaAnteriorOriginal": "VACACIONES,C (4 turnos),C (4 turnos),DESCANSO,C (4 turnos),C (4 turnos),C (4 turnos)",
     "SemanaAnterior": "",
-    "SemanaSiguiente": ""
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": ""
   },
   {
     "Cedula": "73008313",
@@ -28,7 +30,8 @@ datos = [
     "TipoTurno":"",
     "SemanaAnteriorOriginal": "C (4 turnos),C (4 turnos - Sabado),C (4 turnos),C (4 turnos),C (4 turnos),C (4 turnos),DESCANSO",
     "SemanaAnterior": "",
-    "SemanaSiguiente": ""
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": ""
   },
   {
     "Cedula": "1047392733",
@@ -36,7 +39,8 @@ datos = [
     "TipoTurno":"",
     "SemanaAnteriorOriginal": "DESCANSO,B (4 turnos),B (4 turnos),B (4 turnos),B (4 turnos),B (4 turnos),DESCANSO",
     "SemanaAnterior": "",
-    "SemanaSiguiente": ""
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": ""
   },
   {
     "Cedula": "2047392766",
@@ -44,7 +48,8 @@ datos = [
     "TipoTurno":"",
     "SemanaAnteriorOriginal": "B (4 turnos),VACACIONES,VACACIONES,A (4 turnos),A (4 turnos),A (4 turnos),A (4 turnos)",
     "SemanaAnterior": "",
-    "SemanaSiguiente": ""
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": ""
   },
   {
     "Cedula": "2997392006",
@@ -52,7 +57,8 @@ datos = [
     "TipoTurno":"",
     "SemanaAnteriorOriginal": "A (3 turnos),A (3 turnos),A (3 turnos),A (3 turnos),A (3 turnos),A (3 turnos),C (3 turnos)",
     "SemanaAnterior": "",
-    "SemanaSiguiente": ""
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": ""
   }
 ]
 
@@ -64,6 +70,7 @@ class Elemento(BaseModel):
     SemanaAnteriorOriginal: str
     SemanaAnterior: Optional[str] = None
     SemanaSiguiente: Optional[str] = None
+    SemanaSiguienteOriginal: Optional[str] = None
 
 # Initialize FastAPI
 app = FastAPI()
@@ -95,6 +102,20 @@ async def read_root():
 )
 async def predecir_turnos(datos:  list[Elemento]):
 
+    # Diccionario de reemplazo
+    reemplazos_3_turnos = {
+        "X": "DESCANSO",
+        "A": "A (3 turnos)",
+        "B": "B (3 turnos)",
+        "C": "C (3 turnos)"
+    }
+    reemplazos_4_turnos = {
+        "X": "DESCANSO",
+        "A": "A (4 turnos)",
+        "B": "B (4 turnos)",
+        "C": "C (4 turnos)"
+    }
+        
     # Actualizar el tipo de turno
     for elemento in datos:
         semana_anterior = elemento.SemanaAnteriorOriginal.split(",")
@@ -141,11 +162,30 @@ async def predecir_turnos(datos:  list[Elemento]):
             
             # Asignarlo al campo "SemanaSiguiente"
             elemento.SemanaSiguiente= ",".join(semana_siguiente)
-        else:
+        elif elemento.TipoTurno == "3 turnos":
             semana_anterior = elemento.SemanaAnterior.split(",")
             semana_siguiente = ProgramacionTurnosService.predecir_siguiente_semana_3_turnos(semana_anterior)
             
             # Asignarlo al campo "SemanaSiguiente"
             elemento.SemanaSiguiente= ",".join(semana_siguiente)
+        
+    # Actualizar el campo "SemanaSiguienteOriginal"
+    for elemento in datos:
+        
+        if elemento.TipoTurno == "3 turnos":
+            
+            # Reemplazar los nombres de los turnos
+            semana_siguiente_original = ','.join([reemplazos_3_turnos.get(valor, valor) for valor in elemento.SemanaSiguiente.split(',')])
+
+            # Unir la lista actualizada y asignarla al campo "SemanaAnterior"
+            elemento.SemanaSiguienteOriginal = semana_siguiente_original
+          
+        elif elemento.TipoTurno == "4 turnos":
+            
+            # Reemplazar los nombres de los turnos
+            semana_siguiente_original = ','.join([reemplazos_4_turnos.get(valor, valor) for valor in elemento.SemanaSiguiente.split(',')])
+
+            # Unir la lista actualizada y asignarla al campo "SemanaAnterior"
+            elemento.SemanaSiguienteOriginal = semana_siguiente_original
             
     return datos
