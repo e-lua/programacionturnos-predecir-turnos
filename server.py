@@ -225,6 +225,8 @@ async def predecir_turnos(datos:  list[Elemento]):
                        valor_turno = "A (3 turnos) - Sabado"
                     elif elemento.SemanaSiguiente.split(",")[i] == "B":
                        valor_turno = "B (3 turnos) - Sabado"
+                    else:
+                       valor_turno = elemento.SemanaSiguienteOriginal.split(",")[i]
                 else:       
                     # Asignar el valor del turno       
                     valor_turno = elemento.SemanaSiguienteOriginal.split(",")[i]
