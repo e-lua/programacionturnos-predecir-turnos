@@ -13,7 +13,8 @@ datos = [
     "SemanaAnteriorOriginal": "A (4 turnos),A (4 turnos),A (4 turnos - Sabado),A (4 turnos),A (4 turnos),A (4 turnos),ADM",
     "SemanaAnterior": "",
     "SemanaSiguiente": "",
-    "SemanaSiguienteOriginal": ""
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   },
   {
     "Cedula": "1235044947",
@@ -22,7 +23,8 @@ datos = [
     "SemanaAnteriorOriginal": "VACACIONES,C (4 turnos),C (4 turnos),DESCANSO,C (4 turnos),C (4 turnos),C (4 turnos)",
     "SemanaAnterior": "",
     "SemanaSiguiente": "",
-    "SemanaSiguienteOriginal": ""
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   },
   {
     "Cedula": "73008313",
@@ -31,7 +33,8 @@ datos = [
     "SemanaAnteriorOriginal": "C (4 turnos),C (4 turnos - Sabado),C (4 turnos),C (4 turnos),C (4 turnos),C (4 turnos),DESCANSO",
     "SemanaAnterior": "",
     "SemanaSiguiente": "",
-    "SemanaSiguienteOriginal": ""
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   },
   {
     "Cedula": "1047392733",
@@ -40,7 +43,8 @@ datos = [
     "SemanaAnteriorOriginal": "DESCANSO,B (4 turnos),B (4 turnos),B (4 turnos),B (4 turnos),B (4 turnos),DESCANSO",
     "SemanaAnterior": "",
     "SemanaSiguiente": "",
-    "SemanaSiguienteOriginal": ""
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   },
   {
     "Cedula": "2047392766",
@@ -49,7 +53,8 @@ datos = [
     "SemanaAnteriorOriginal": "B (4 turnos),VACACIONES,VACACIONES,A (4 turnos),A (4 turnos),A (4 turnos),A (4 turnos)",
     "SemanaAnterior": "",
     "SemanaSiguiente": "",
-    "SemanaSiguienteOriginal": ""
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   },
   {
     "Cedula": "2997392006",
@@ -58,7 +63,8 @@ datos = [
     "SemanaAnteriorOriginal": "A (3 turnos),A (3 turnos),A (3 turnos),A (3 turnos),A (3 turnos),A (3 turnos),C (3 turnos)",
     "SemanaAnterior": "",
     "SemanaSiguiente": "",
-    "SemanaSiguienteOriginal": ""
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   }
 ]
 
@@ -66,12 +72,18 @@ datos = [
 class Elemento(BaseModel):
     Cedula: str
     ApellidoNombre: str
+    Fechas: str
     TipoTurno: Optional[str] = None
     SemanaAnteriorOriginal: str
     SemanaAnterior: Optional[str] = None
     SemanaSiguiente: Optional[str] = None
     SemanaSiguienteOriginal: Optional[str] = None
 
+class ElementoRespuesta(BaseModel):
+    ClaveParaBuscar: str
+    TipoTurno: str
+    ValorTurno: str
+    
 # Initialize FastAPI
 app = FastAPI()
 
@@ -187,5 +199,22 @@ async def predecir_turnos(datos:  list[Elemento]):
 
             # Unir la lista actualizada y asignarla al campo "SemanaAnterior"
             elemento.SemanaSiguienteOriginal = semana_siguiente_original
-            
-    return datos
+        
+    # Crear array para la respuesta
+    elementos_respuesta = []
+
+    for elemento in datos:
+        for i in range(7):  # Asumiendo que elemento.elemento y elemento.SemanaSiguienteOriginal tienen siempre 7 elementos
+            elemento_respuesta = ElementoRespuesta(
+                ClaveParaBuscar=elemento.Cedula + elemento.Fechas.split(",")[i],
+                TipoTurno=elemento.TipoTurno,
+                ValorTurno=elemento.SemanaSiguienteOriginal.split(",")[i]
+            )
+            elementos_respuesta.append(elemento_respuesta)
+              
+    return {"detalle":datos,"respuesta":elementos_respuesta}
+
+
+
+
+
