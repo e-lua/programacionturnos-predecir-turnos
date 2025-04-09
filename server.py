@@ -78,6 +78,7 @@ class Elemento(BaseModel):
     SemanaAnterior: Optional[str] = None
     SemanaSiguiente: Optional[str] = None
     SemanaSiguienteOriginal: Optional[str] = None
+    NombresFechas: Optional[str] = None
 
 class ElementoRespuesta(BaseModel):
     ClaveParaBuscar: str
@@ -202,15 +203,40 @@ async def predecir_turnos(datos:  list[Elemento]):
         
     # Crear array para la respuesta
     elementos_respuesta = []
-
     for elemento in datos:
-        for i in range(7):  # Asumiendo que elemento.elemento y elemento.SemanaSiguienteOriginal tienen siempre 7 elementos
-            elemento_respuesta = ElementoRespuesta(
-                ClaveParaBuscar=elemento.Cedula + elemento.Fechas.split(",")[i],
-                TipoTurno=elemento.TipoTurno,
-                ValorTurno=elemento.SemanaSiguienteOriginal.split(",")[i]
-            )
+        for i in range(7):  # Asumiendo que elemento.elemento y elemento.SemanaSiguienteOriginal tienen siempre 7 fechas
+                        
+            # Clave unica para buscar
+            clave_unica=elemento.Cedula + elemento.Fechas.split(",")[i]
+            
+            # Tipo de turno
+            tipo_tuno=elemento.TipoTurno
+            
+            # Valor turno
+            valor_turno=""
+            
+            # Nombre del valor del turno | Hay que tomar en cuenta que los nombres de los 3 turnos no identifica si es sabado, por lo tanto vamos a actualizar esos casos
+            if elemento.TipoTurno == "3 turnos":
+                
+                # Verificar si es sabado
+                if elemento.NombresFechas.split(",")[i] == "Saturday":
+                    
+                    if elemento.SemanaSiguiente[i] == "A":
+                       valor_turno = "A (3 turnos) - Sabado"
+                    elif elemento.SemanaSiguiente[i] == "B":
+                       valor_turno = "B (3 turnos) - Sabado"
+                
+            elif elemento.TipoTurno == "4 turnos":
+                
+                # Asignar el valor del turno
+                valor_turno = elemento.SemanaSiguienteOriginal.split(",")[i]
+                
+            
+            # Append al arreglo de los objetos
+            elemento_respuesta = ElementoRespuesta(ClaveParaBuscar=clave_unica,TipoTurno=tipo_tuno,ValorTurno=valor_turno)
             elementos_respuesta.append(elemento_respuesta)
+            
+    
               
     return {"detalle":datos,"respuesta":elementos_respuesta}
 
