@@ -184,3 +184,13 @@ class ProgramacionTurnosService:
             siguientes_turnos.append(patron[indice])
         
         return siguientes_turnos
+        
+    def predecir_siguiente_semana_adm_turnos(turnos_iniciales):
+        """
+        Predice los siguientes 7 días manteniendose las mimas fechas
+        con descansos específicos
+        """
+        # Calculamos los siguientes 7 turnos
+        siguientes_turnos = ["ADM","ADM","X","ADM","ADM","ADM","ADM"]
+        
+        return siguientes_turnos

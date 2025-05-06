@@ -65,6 +65,16 @@ datos = [
     "SemanaSiguiente": "",
     "SemanaSiguienteOriginal": "",
     "Fechas": "04,05,06,07,08,09,10"
+  },
+  {
+    "Cedula": "2997392006",
+    "ApellidoNombre": "PEREZ LOPEZ ANTONIO",
+    "TipoTurno":"",
+    "SemanaAnteriorOriginal": "ADM - Viernes,ADM - Sabado,DESCANSO,ADM - Lun a Jue,ADM - Lun a Jue,ADM - Lun a Jue,ADM - Lun a Jue",
+    "SemanaAnterior": "",
+    "SemanaSiguiente": "",
+    "SemanaSiguienteOriginal": "",
+    "Fechas": "04,05,06,07,08,09,10"
   }
 ]
 
@@ -128,6 +138,10 @@ async def predecir_turnos(datos:  list[Elemento]):
         "B": "B (4 turnos)",
         "C": "C (4 turnos)"
     }
+    reemplazos_adm_turnos = {
+        "X": "DESCANSO",
+        "ADM": "ADM"
+    }
         
     # Actualizar el tipo de turno
     for elemento in datos:
@@ -144,7 +158,11 @@ async def predecir_turnos(datos:  list[Elemento]):
             elif "4 turnos" in turno:
                 tipo_turno="4 turnos"
                 break
-        
+             
+            elif "ADM" in turno:
+                tipo_turno="ADM"
+                break
+                   
         # Asignarlo al campo "TipoTuno"
         elemento.TipoTurno =tipo_turno
         
@@ -160,8 +178,10 @@ async def predecir_turnos(datos:  list[Elemento]):
                 semana_actualizada.append("B")
             elif "C (" in turno:
                 semana_actualizada.append("C")
+            elif "ADM" in turno:
+                semana_actualizada.append("ADM")
             else:
-                semana_actualizada.append("X")  # Valor por defecto para no A, B, C
+                semana_actualizada.append("X")  # Valor por defecto para no A, B, C, ADM
 
         # Unir la lista actualizada y asignarla al campo "SemanaAnterior"
         elemento.SemanaAnterior = ",".join(semana_actualizada)
@@ -181,7 +201,13 @@ async def predecir_turnos(datos:  list[Elemento]):
             
             # Asignarlo al campo "SemanaSiguiente"
             elemento.SemanaSiguiente= ",".join(semana_siguiente)
-        
+        elif elemento.TipoTurno == "ADM":
+            semana_anterior = elemento.SemanaAnterior.split(",")
+            semana_siguiente = ProgramacionTurnosService.predecir_siguiente_semana_adm_turnos(semana_anterior)
+            
+            # Asignarlo al campo "SemanaSiguiente"
+            elemento.SemanaSiguiente= ",".join(semana_siguiente)
+                
     # Actualizar el campo "SemanaSiguienteOriginal"
     for elemento in datos:
         
@@ -200,7 +226,15 @@ async def predecir_turnos(datos:  list[Elemento]):
 
             # Unir la lista actualizada y asignarla al campo "SemanaAnterior"
             elemento.SemanaSiguienteOriginal = semana_siguiente_original
-        
+          
+        elif elemento.TipoTurno == "ADM":
+            
+            # Reemplazar los nombres de los turnos
+            semana_siguiente_original = ','.join([reemplazos_adm_turnos.get(valor, valor) for valor in elemento.SemanaSiguiente.split(',')])
+
+            # Unir la lista actualizada y asignarla al campo "SemanaAnterior"
+            elemento.SemanaSiguienteOriginal = semana_siguiente_original
+         
     # Crear array para la respuesta
     elementos_respuesta = []
     for elemento in datos:
@@ -236,6 +270,20 @@ async def predecir_turnos(datos:  list[Elemento]):
                 # Asignar el valor del turno
                 valor_turno = elemento.SemanaSiguienteOriginal.split(",")[i]
                 
+            elif elemento.TipoTurno == "ADM":
+                
+                # Verificar si es viernes
+                if elemento.NombresFechas.split(",")[i] == "Friday":
+                    valor_turno = "ADM - Viernes"
+                # Verificar si es sabado
+                elif elemento.NombresFechas.split(",")[i] == "Saturday":
+                    valor_turno = "ADM - Sabado"
+                # Verificar si es lunes | martes | miercoles | jueves
+                elif elemento.NombresFechas.split(",")[i] == "Monday" or elemento.NombresFechas.split(",")[i] == "Tuesday" or elemento.NombresFechas.split(",")[i] == "Wednesday" or elemento.NombresFechas.split(",")[i] == "Thursday":
+                    valor_turno = "ADM - Lun a Jue"
+                else:       
+                    # Asignar el valor del turno       
+                    valor_turno = elemento.SemanaSiguienteOriginal.split(",")[i]               
             
             # Append al arreglo de los objetos
             elemento_respuesta = ElementoRespuesta(ClaveParaBuscar=clave_unica,TipoTurno=tipo_tuno,ValorTurno=valor_turno)
